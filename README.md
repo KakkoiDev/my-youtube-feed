@@ -2,34 +2,40 @@
 
 Your subscriptions. Your feed. Your attention.
 
-A browser-only curated YouTube reader. No recommendation ranking, account or server-side database. Independent of Top YouTube Shorts.
+A curated chronological YouTube reader, independent of Top YouTube Shorts. One frontend supports both a browser-only GitHub Pages app and a private self-hosted instance.
 
-## Run
+## Public mode
 
-Serve this directory over HTTP (e.g. `python3 -m http.server 8000`) or enable GitHub Pages from main / root in repository settings.
+Serve this directory over HTTP (for example `python3 -m http.server 8000`), or use GitHub Pages from main / root. No backend, Node runtime or npm install is required for static hosting. Configure your YouTube Data API v3 key in Settings; it stays in browser localStorage. State is stored in IndexedDB. JSON exports exclude the key.
 
-In Settings, enter your own YouTube Data API v3 key. Enable the API in Google Cloud and restrict the key to that API and your deployment's HTTP referrer. The key stays in browser localStorage and is sent to Google; it is not included in exports.
+Restrict the public key to the YouTube Data API and your hosting referrer. See [self-hosting documentation](docs/SELF-HOSTING.md) for the different restrictions required by server requests.
 
-In Subscriptions, add a channel by @handle or /channel/UC… URL, or opt into the Japanese AI starter collection. Refresh to retrieve uploads. Starter handles are provisional and resolved through the API when imported; review the returned channel names.
+## Self-hosted mode
+
+Node.js 24+ provides the HTTP server and SQLite without third-party packages. The private instance shares subscriptions, collections, metadata, history, saved videos and preferences across devices. API requests and the key stay on the server. Access uses the existing Tailscale identity and CSRF protection, with granular mutations to prevent stale clients replacing newer state.
+
+Follow [docs/SELF-HOSTING.md](docs/SELF-HOSTING.md) for installation, on-demand lifecycle, migration, secret configuration, backup/restore, updates and troubleshooting. Keep all private data outside this repository. MyTube must not start automatically at boot.
 
 ## Features
 
-- Chronological feed restricted to active subscriptions.
-- Collections, pause/unsubscribe, per-channel format and initial history.
-- Unwatched filter, manual watched state, watch later.
-- Finite embedded player with next/previous controls and keyboard arrows; touch gestures outside the iframe.
-- IndexedDB state, JSON backup and collection import/export.
-- Hash routing compatible with static hosts.
+- Only explicitly subscribed channels and public playlists, newest first; no popularity ranking or MyTube recommendations.
+- Bulk handles/URLs, collections, per-source format/history preferences, pause and unsubscribe.
+- Shorts candidates (duration ≤180 seconds; a heuristic), long-form and unwatched filters.
+- Watch Later, manual watched state, duplicate prevention, JSON backup/collection import and export.
+- Non-embeddable videos hidden by default, with a YouTube-only opt-in filter.
+- Finite embedded playback queue with previous/next, keyboard and touch navigation; external YouTube links.
+- Japanese AI starter handles are provisional: resolve them through the API and review the returned channel names.
 
-## Limitations / next steps
+## Development and tests
 
-- Requires a user-provided API key. Channel upload playlist queries are used instead of expensive global search.
-- Shorts classification is a duration heuristic (up to 180 seconds), not a verified YouTube Shorts flag. Short landscape videos may be included.
-- Upload retrieval is limited to 10 pages per channel per refresh; cached data is not a comprehensive archive and removed videos may remain cached.
-- YouTube embedding can be disabled by creators. External YouTube links are available.
-- Embedded YouTube controls and related content remain controlled by YouTube; the app itself does not insert recommendations.
-- Watch state is manual (Watched & next or Mark watched), not playback tracking.
-- No automatic refresh, installable PWA/service worker, shareable collection URL, collection deletion/rename or cross-device sync yet.
-- The current UI is an initial implementation; live API, mobile playback, browser E2E and deployment verification are still required.
+```sh
+npm test
+```
+
+No dependencies to install. HTTP tests open temporary loopback listeners and use mocked upstream responses; real API and browser checks are separate.
+
+## Limits
+
+Refresh is manual, with at most 10 pages / 500 entries per source per refresh. Cached metadata is not a complete archive. Some videos cannot embed, and YouTube controls its player and endscreen content. Watch state is manual. Active self-hosted tabs synchronize when idle; conflicts retain pending state for export/recovery. No automatic playback tracking, offline write queue, collection rename/delete, PWA or recommendation engine.
 
 Not affiliated with YouTube or Google.
